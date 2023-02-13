@@ -1,35 +1,16 @@
-# Train CIFAR10 with PyTorch
+# Assignment 7
 
-I'm playing with [PyTorch](http://pytorch.org/) on the CIFAR10 dataset.
+Train ResNet18 on Cifar10 for 20 Epochs
 
-## Prerequisites
-- Python 3.6+
-- PyTorch 1.0+
+There should not be any function or class that you can define in your Google Colab Notebook. Everything must be imported from all of your other files your colab file must:
 
-## Training
-```
-# Start training with: 
-python main.py
+Train resnet18 for 20 epochs on the CIFAR10 dataset
 
-# You can manually resume the training with: 
-python main.py --resume --lr=0.01
-```
+Show loss curves for test and train datasets
 
-## Accuracy
-| Model             | Acc.        |
-| ----------------- | ----------- |
-| [VGG16](https://arxiv.org/abs/1409.1556)              | 92.64%      |
-| [ResNet18](https://arxiv.org/abs/1512.03385)          | 93.02%      |
-| [ResNet50](https://arxiv.org/abs/1512.03385)          | 93.62%      |
-| [ResNet101](https://arxiv.org/abs/1512.03385)         | 93.75%      |
-| [RegNetX_200MF](https://arxiv.org/abs/2003.13678)     | 94.24%      |
-| [RegNetY_400MF](https://arxiv.org/abs/2003.13678)     | 94.29%      |
-| [MobileNetV2](https://arxiv.org/abs/1801.04381)       | 94.43%      |
-| [ResNeXt29(32x4d)](https://arxiv.org/abs/1611.05431)  | 94.73%      |
-| [ResNeXt29(2x64d)](https://arxiv.org/abs/1611.05431)  | 94.82%      |
-| [SimpleDLA](https://arxiv.org/abs/1707.064)           | 94.89%      |
-| [DenseNet121](https://arxiv.org/abs/1608.06993)       | 95.04%      |
-| [PreActResNet18](https://arxiv.org/abs/1603.05027)    | 95.11%      |
-| [DPN92](https://arxiv.org/abs/1707.01629)             | 95.16%      |
-| [DLA](https://arxiv.org/pdf/1707.06484.pdf)           | 95.47%      |
+Show a gallery of 10 misclassified images
+
+Show gradcam Links to an external site.output on 10 misclassified images.
+
+Remember if you are applying GradCAM on a channel that is less than 5px, then please don't bother to submit the assignment. 😡🤬🤬🤬🤬 Once done, upload the code to GitHub, and share the code. This readme must link to the main repo so we can read your file structure. Train for 20 epochs Get 10 misclassified images Get 10 GradCam outputs on any misclassified images (remember that you MUST use the library we discussed in the class) Apply these transforms while training: RandomCrop(32, padding=4) CutOut(16x16)
 
