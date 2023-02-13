@@ -1,154 +1,155 @@
-'''Train CIFAR10 with PyTorch.'''
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import torch.nn.functional as F
-import torch.backends.cudnn as cudnn
-
-import torchvision
-import torchvision.transforms as transforms
-
+import torch                   #PyTorch base libraries
+from torchvision import datasets, transforms
+import numpy as np
+import matplotlib.pyplot as plt
 import os
-import argparse
+import torch.nn.functional as F
+import cv2
+import albumentations as A
+from albumentations.pytorch import ToTensorV2
 
-from models import *
-from utils import progress_bar
+from albumentations import Compose, PadIfNeeded, RandomCrop, Normalize, HorizontalFlip, ShiftScaleRotate, CoarseDropout, Cutout, PadIfNeeded
 
-
-parser = argparse.ArgumentParser(description='PyTorch CIFAR10 Training')
-parser.add_argument('--lr', default=0.1, type=float, help='learning rate')
-parser.add_argument('--resume', '-r', action='store_true',
-                    help='resume from checkpoint')
-args = parser.parse_args()
-
-device = 'cuda' if torch.cuda.is_available() else 'cpu'
-best_acc = 0  # best test accuracy
-start_epoch = 0  # start from epoch 0 or last checkpoint epoch
-
-# Data
-print('==> Preparing data..')
-transform_train = transforms.Compose([
-    transforms.RandomCrop(32, padding=4),
-    transforms.RandomHorizontalFlip(),
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-
-transform_test = transforms.Compose([
-    transforms.ToTensor(),
-    transforms.Normalize((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010)),
-])
-
-trainset = torchvision.datasets.CIFAR10(
-    root='./data', train=True, download=True, transform=transform_train)
-trainloader = torch.utils.data.DataLoader(
-    trainset, batch_size=128, shuffle=True, num_workers=2)
-
-testset = torchvision.datasets.CIFAR10(
-    root='./data', train=False, download=True, transform=transform_test)
-testloader = torch.utils.data.DataLoader(
-    testset, batch_size=100, shuffle=False, num_workers=2)
-
-classes = ('plane', 'car', 'bird', 'cat', 'deer',
-           'dog', 'frog', 'horse', 'ship', 'truck')
-
-# Model
-print('==> Building model..')
-# net = VGG('VGG19')
-# net = ResNet18()
-# net = PreActResNet18()
-# net = GoogLeNet()
-# net = DenseNet121()
-# net = ResNeXt29_2x64d()
-# net = MobileNet()
-# net = MobileNetV2()
-# net = DPN92()
-# net = ShuffleNetG2()
-# net = SENet18()
-# net = ShuffleNetV2(1)
-# net = EfficientNetB0()
-# net = RegNetX_200MF()
-net = SimpleDLA()
-net = net.to(device)
-if device == 'cuda':
-    net = torch.nn.DataParallel(net)
-    cudnn.benchmark = True
-
-if args.resume:
-    # Load checkpoint.
-    print('==> Resuming from checkpoint..')
-    assert os.path.isdir('checkpoint'), 'Error: no checkpoint directory found!'
-    checkpoint = torch.load('./checkpoint/ckpt.pth')
-    net.load_state_dict(checkpoint['net'])
-    best_acc = checkpoint['acc']
-    start_epoch = checkpoint['epoch']
-
-criterion = nn.CrossEntropyLoss()
-optimizer = optim.SGD(net.parameters(), lr=args.lr,
-                      momentum=0.9, weight_decay=5e-4)
-scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+class album_Compose_train():
+    def __init__(self):
+        self.albumentations_transform = Compose([
+            PadIfNeeded(40),
+            RandomCrop(32,32),
+            HorizontalFlip(),
+            Cutout(num_holes=1, max_h_size=16, max_w_size=16, fill_value=[0.4914*255, 0.4822*255, 0.4471*255], always_apply=True, p=1.00),
+#            CoarseDropout(max_holes=3, max_height=8, max_width=8, min_holes=None, min_height=4, min_width=4, fill_value=[0.4914*255, 0.4822*255, 0.4471*255], mask_fill_value=None, always_apply=False, p=0.7),
+            Normalize(mean=[0.4914, 0.4822, 0.4471],std=[0.2469, 0.2433, 0.2615]),
+            ToTensorV2()
+        ])
+    def __call__(self,img):
+        img = np.array(img)
+        img = self.albumentations_transform(image=img)['image']
+        return img
 
 
-# Training
-def train(epoch):
-    print('\nEpoch: %d' % epoch)
-    net.train()
-    train_loss = 0
+class album_Compose_test():
+    def __init__(self):
+        self.albumentations_transform = Compose([
+            Normalize(mean=[0.4914, 0.4822, 0.4471],std=[0.2469, 0.2433, 0.2615]),
+            ToTensorV2()
+        ])
+
+    def __call__(self,img):
+        img = np.array(img)
+        img = self.albumentations_transform(image=img)['image']
+        return img
+
+class dataset_cifar10:
+    """
+    Class to load the data and define the data loader
+    """
+
+    def __init__(self, batch_size=128):
+
+        # Defining CUDA
+        cuda = torch.cuda.is_available()
+        print("CUDA availability ?",cuda)
+
+        # Defining data loaders with setting
+        self.dataloaders_args = dict(shuffle=True, batch_size = batch_size, num_workers = 2, pin_memory = True) if cuda else dict(shuffle=True,batch_size = batch_size)
+        self.sample_dataloaders_args = self.dataloaders_args.copy()
+
+        self.classes = ('plane', 'car', 'bird', 'cat',
+            'deer', 'dog', 'frog', 'horse', 'ship', 'truck')
+
+    def data(self, train_flag):
+
+        # Transformations data augmentation (only for training)
+        if train_flag :
+            return datasets.CIFAR10('./Data',
+                            train=train_flag,
+                            transform=album_Compose_train(),
+                            download=True)
+
+        # Testing transformation - normalization adder
+        else:
+            return datasets.CIFAR10('./Data',
+                                train=train_flag,
+                                transform=album_Compose_test(),
+                                download=True)
+
+    # Dataloader function
+    def loader(self, train_flag=True):
+        return(torch.utils.data.DataLoader(self.data(train_flag), **self.dataloaders_args))
+
+
+def train(model, device, train_loader, optimizer, epoch, L1):
+    model.train()
+    epoch_loss = 0
     correct = 0
-    total = 0
-    for batch_idx, (inputs, targets) in enumerate(trainloader):
-        inputs, targets = inputs.to(device), targets.to(device)
+
+    for batch_idx, (data, target) in enumerate(train_loader):
+        data, target = data.to(device), target.to(device)
         optimizer.zero_grad()
-        outputs = net(inputs)
-        loss = criterion(outputs, targets)
+        output = model(data)
+        loss = F.cross_entropy(output, target)
+
+        if L1:
+          L1_loss = nn.L1Loss(size_average=None, reduce=None, reduction='mean')
+          reg_loss = 0 
+          for param in model.parameters():
+            zero_vector = torch.rand_like(param) * 0
+            reg_loss += L1_loss(param,zero_vector)
+          loss += .001 * reg_loss
+
+        epoch_loss += loss.item()
         loss.backward()
         optimizer.step()
+        pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+        correct += pred.eq(target.view_as(pred)).sum().item()
 
-        train_loss += loss.item()
-        _, predicted = outputs.max(1)
-        total += targets.size(0)
-        correct += predicted.eq(targets).sum().item()
+    print(f'Train set: Average loss: {loss.item():.4f}, Accuracy: {100. * correct/len(train_loader.dataset):.2f}')
+    train_loss = epoch_loss / len(train_loader)
+    train_acc=100.*correct/len(train_loader.dataset)
+    return train_loss, train_acc
 
-        progress_bar(batch_idx, len(trainloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                     % (train_loss/(batch_idx+1), 100.*correct/total, correct, total))
-
-
-def test(epoch):
-    global best_acc
-    net.eval()
+def test(model, device, test_loader):
+    model.eval()
     test_loss = 0
     correct = 0
-    total = 0
+    test_pred = torch.LongTensor()
+    target_pred = torch.LongTensor()
+    target_data = torch.LongTensor()
+
     with torch.no_grad():
-        for batch_idx, (inputs, targets) in enumerate(testloader):
-            inputs, targets = inputs.to(device), targets.to(device)
-            outputs = net(inputs)
-            loss = criterion(outputs, targets)
-
-            test_loss += loss.item()
-            _, predicted = outputs.max(1)
-            total += targets.size(0)
-            correct += predicted.eq(targets).sum().item()
-
-            progress_bar(batch_idx, len(testloader), 'Loss: %.3f | Acc: %.3f%% (%d/%d)'
-                         % (test_loss/(batch_idx+1), 100.*correct/total, correct, total))
-
-    # Save checkpoint.
-    acc = 100.*correct/total
-    if acc > best_acc:
-        print('Saving..')
-        state = {
-            'net': net.state_dict(),
-            'acc': acc,
-            'epoch': epoch,
-        }
-        if not os.path.isdir('checkpoint'):
-            os.mkdir('checkpoint')
-        torch.save(state, './checkpoint/ckpt.pth')
-        best_acc = acc
+        for data, target in test_loader:
+            data, target = data.to(device), target.to(device)
+            output = model(data)
+            test_loss += F.cross_entropy(output, target, reduction='sum').item()  # sum up batch loss
+            pred = output.argmax(dim=1, keepdim=True)  # get the index of the max log-probability
+            pred_cpu = output.cpu().data.max(dim=1, keepdim=True)[1]
+            correct += pred.eq(target.view_as(pred)).sum().item()
+            test_pred = torch.cat((test_pred, pred_cpu), dim=0)
+            target_pred = torch.cat((target_pred, target.cpu()), dim=0)
+            target_data = torch.cat((target_data, data.cpu()), dim=0)
 
 
-for epoch in range(start_epoch, start_epoch+200):
-    train(epoch)
-    test(epoch)
-    scheduler.step()
+    test_loss /= len(test_loader.dataset)
+    test_acc = 100.*correct/len(test_loader.dataset)
+    print(f'\nTest set: Average loss: {test_loss:.3f}, Accuracy: {100. * correct/len(test_loader.dataset):.2f}')
+    return test_loss, test_acc, test_pred, target_pred, target_data
+	
+def main(EPOCHS, model, device, train_loader, test_loader, optimizer, L1):
+  train_loss_values = []
+  test_loss_values = []
+  train_acc_values = []
+  test_acc_values = []
+
+  for epoch in range(EPOCHS):
+      print('\nEpoch {} : '.format(epoch))
+      # train the model
+      train_loss, train_acc = train(model, device, train_loader, optimizer, epoch, L1)
+      test_loss, test_acc, test_pred, target_pred, target_data  = test(model, device, test_loader)
+
+      train_loss_values.append(train_loss)
+      test_loss_values.append(test_loss)
+
+      train_acc_values.append(train_acc)
+      test_acc_values.append(test_acc)
+
+  return train_loss_values, test_loss_values, train_acc_values, test_acc_values, test_pred, target_pred, target_data
