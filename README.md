@@ -1,162 +1,157 @@
-  Write a custom ResNet architecture for CIFAR10 that has the following architecture:
+ Build the following network:
 
-    PrepLayer - Conv 3x3 s1, p1) >> BN >> RELU [64k]
+    
+    That takes a CIFAR10 image (32x32x3)
 
-    Layer1 -
-    X = Conv 3x3 (s1, p1) >> MaxPool2D >> BN >> RELU [128k]
-    R1 = ResBlock( (Conv-BN-ReLU-Conv-BN-ReLU))(X) [128k] 
-    Add(X, R1)
+    Add 3 Convolutions to arrive at AxAx48 dimensions (e.g. 32x32x3 |    3x3x3x16 >> 3x3x16x32 >> 3x3x32x48)
 
-    Layer 2 -
-    Conv 3x3 [256k]
-    MaxPooling2D
-    BN
-    ReLU
+    Apply GAP and get 1x1x48, call this X
 
-    Layer 3 -
-    X = Conv 3x3 (s1, p1) >> MaxPool2D >> BN >> RELU [512k]
-    R2 = ResBlock( (Conv-BN-ReLU-Conv-BN-ReLU))(X) [512k]
-    Add(X, R2)
+    Create a block called ULTIMUS that:
 
-    MaxPooling with Kernel Size 4
+    Creates 3 FC layers called K, Q and V such that:
 
-    FC Layer
+    X*K = 48*48x8 > 8
 
-    SoftMax
+    X*Q = 48*48x8 > 8 
 
-    Uses One Cycle Policy such that:
+    X*V = 48*48x8 > 8 
 
-    Total Epochs = 24
+    then create AM = SoftMax(QTK)/(8^0.5) = 8*8 = 8
+    then Z = V*AM = 8*8 > 8
+    then another FC layer called Out that:
+    Z*Out = 8*8x48 > 48
 
-    Max at Epoch = 5
+    Repeat this Ultimus block 4 times
 
-    LRMIN = FIND
+    Then add final FC layer that converts 48 to 10 and sends it to the loss function.
 
-    LRMAX = FIND
+    Model would look like this 
 
-    NO Annihilation
+    C>C>C>U>U>U>U>FFC>Loss
 
-    Uses this transform -RandomCrop 32, 32 (after padding of 4) >> FlipLR >> Followed by CutOut(8, 8)
+    Train the model for 24 epochs using the OCP that I wrote in class. Use ADAM as an optimizer. **
 
-    Batch size = 512
+        Batch size = 512
     
  Logs-:
     
-    Epoch 0 : 
-    Train set: Average loss: 1.4403, Accuracy: 41.00
+      Epoch 0 : 
+      Train set: Average loss: 2.3020, Accuracy: 13.16
 
-    Test set: Average loss: 0.004, Accuracy: 41.30
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 1 : 
-    Train set: Average loss: 1.2742, Accuracy: 48.88
+      Epoch 1 : 
+      Train set: Average loss: 2.3049, Accuracy: 10.63
 
-    Test set: Average loss: 0.003, Accuracy: 53.71
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 2 : 
-    Train set: Average loss: 1.3152, Accuracy: 60.43
+      Epoch 2 : 
+      Train set: Average loss: 2.3163, Accuracy: 9.95
 
-    Test set: Average loss: 0.002, Accuracy: 61.22
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 3 : 
-    Train set: Average loss: 0.8507, Accuracy: 63.69
+      Epoch 3 : 
+      Train set: Average loss: 56678.2969, Accuracy: 10.07
 
-    Test set: Average loss: 0.002, Accuracy: 71.81
+      Test set: Average loss: 368.239, Accuracy: 10.00
 
-    Epoch 4 : 
-    Train set: Average loss: 0.8564, Accuracy: 73.83
+      Epoch 4 : 
+      Train set: Average loss: 65302.3750, Accuracy: 10.02
 
-    Test set: Average loss: 0.001, Accuracy: 76.79
+      Test set: Average loss: 884.942, Accuracy: 10.00
 
-    Epoch 5 : 
-    Train set: Average loss: 0.7402, Accuracy: 77.91
+      Epoch 5 : 
+      Train set: Average loss: 1764.8209, Accuracy: 9.93
 
-    Test set: Average loss: 0.002, Accuracy: 75.58
+      Test set: Average loss: 17.722, Accuracy: 10.00
 
-    Epoch 6 : 
-    Train set: Average loss: 0.4352, Accuracy: 80.57
+      Epoch 6 : 
+      Train set: Average loss: 23000.9414, Accuracy: 10.06
 
-    Test set: Average loss: 0.001, Accuracy: 81.34
+      Test set: Average loss: 12.444, Accuracy: 10.00
 
-    Epoch 7 : 
-    Train set: Average loss: 0.3789, Accuracy: 83.87
+      Epoch 7 : 
+      Train set: Average loss: 538.4319, Accuracy: 9.99
 
-    Test set: Average loss: 0.001, Accuracy: 82.24
+      Test set: Average loss: 1.217, Accuracy: 10.00
 
-    Epoch 8 : 
-    Train set: Average loss: 0.2953, Accuracy: 86.83
+      Epoch 8 : 
+      Train set: Average loss: 64.2081, Accuracy: 9.79
 
-    Test set: Average loss: 0.001, Accuracy: 85.68
+      Test set: Average loss: 0.209, Accuracy: 10.00
 
-    Epoch 9 : 
-    Train set: Average loss: 0.2981, Accuracy: 89.23
+      Epoch 9 : 
+      Train set: Average loss: 11.8270, Accuracy: 9.96
 
-    Test set: Average loss: 0.001, Accuracy: 84.72
+      Test set: Average loss: 0.096, Accuracy: 10.00
 
-    Epoch 10 : 
-    Train set: Average loss: 0.2272, Accuracy: 90.51
+      Epoch 10 : 
+      Train set: Average loss: 7.6269, Accuracy: 9.84
 
-    Test set: Average loss: 0.001, Accuracy: 85.78
+      Test set: Average loss: 0.020, Accuracy: 10.00
 
-    Epoch 11 : 
-    Train set: Average loss: 0.2021, Accuracy: 92.28
+      Epoch 11 : 
+      Train set: Average loss: 6.4092, Accuracy: 9.85
 
-    Test set: Average loss: 0.001, Accuracy: 86.94
+      Test set: Average loss: 0.014, Accuracy: 10.00
 
-    Epoch 12 : 
-    Train set: Average loss: 0.1481, Accuracy: 93.19
+      Epoch 12 : 
+      Train set: Average loss: 8.5962, Accuracy: 9.94
 
-    Test set: Average loss: 0.001, Accuracy: 87.48
+      Test set: Average loss: 0.024, Accuracy: 10.00
 
-    Epoch 13 : 
-    Train set: Average loss: 0.2045, Accuracy: 94.48
+      Epoch 13 : 
+      Train set: Average loss: 8.0253, Accuracy: 9.97
 
-    Test set: Average loss: 0.001, Accuracy: 87.24
+      Test set: Average loss: 0.021, Accuracy: 10.00
 
-    Epoch 14 : 
-    Train set: Average loss: 0.1044, Accuracy: 95.62
+      Epoch 14 : 
+      Train set: Average loss: 8.9160, Accuracy: 9.95
 
-    Test set: Average loss: 0.001, Accuracy: 88.64
+      Test set: Average loss: 0.022, Accuracy: 10.00
 
-    Epoch 15 : 
-    Train set: Average loss: 0.1349, Accuracy: 96.51
+      Epoch 15 : 
+      Train set: Average loss: 3.2180, Accuracy: 10.04
 
-    Test set: Average loss: 0.001, Accuracy: 88.62
+      Test set: Average loss: 0.009, Accuracy: 10.00
 
-    Epoch 16 : 
-    Train set: Average loss: 0.0990, Accuracy: 97.26
+      Epoch 16 : 
+      Train set: Average loss: 3.5376, Accuracy: 9.99
 
-    Test set: Average loss: 0.001, Accuracy: 89.00
+      Test set: Average loss: 0.010, Accuracy: 10.00
 
-    Epoch 17 : 
-    Train set: Average loss: 0.0383, Accuracy: 97.57
+      Epoch 17 : 
+      Train set: Average loss: 2.5492, Accuracy: 9.80
 
-    Test set: Average loss: 0.001, Accuracy: 88.98
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 18 : 
-    Train set: Average loss: 0.0791, Accuracy: 98.01
+      Epoch 18 : 
+      Train set: Average loss: 2.4133, Accuracy: 10.01
 
-    Test set: Average loss: 0.001, Accuracy: 89.42
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 19 : 
-    Train set: Average loss: 0.0403, Accuracy: 98.29
+      Epoch 19 : 
+      Train set: Average loss: 2.3110, Accuracy: 10.01
 
-    Test set: Average loss: 0.001, Accuracy: 89.38
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 20 : 
-    Train set: Average loss: 0.0615, Accuracy: 98.42
+      Epoch 20 : 
+      Train set: Average loss: 2.3217, Accuracy: 9.96
 
-    Test set: Average loss: 0.001, Accuracy: 89.69
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 21 : 
+      Epoch 21 : 
+      Train set: Average loss: 2.3014, Accuracy: 9.90
 
-    Test set: Average loss: 0.001, Accuracy: 89.61
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 22 : 
-    Train set: Average loss: 0.0519, Accuracy: 98.74
+      Epoch 22 : 
+      Train set: Average loss: 2.3024, Accuracy: 9.87
 
-    Test set: Average loss: 0.001, Accuracy: 89.62
+      Test set: Average loss: 0.005, Accuracy: 10.00
 
-    Epoch 23 : 
-    Train set: Average loss: 0.0207, Accuracy: 98.91
+      Epoch 23 : 
+      Train set: Average loss: 2.3029, Accuracy: 10.05
 
-    Test set: Average loss: 0.001, Accuracy: 89.81
+      Test set: Average loss: 0.005, Accuracy: 10.00
