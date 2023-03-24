@@ -1,35 +1,35 @@
-# Train CIFAR10 with PyTorch
+                                                          **Train Custom dataset using YOLOV3**
 
-I'm playing with [PyTorch](http://pytorch.org/) on the CIFAR10 dataset.
+    OpenCV Yolo:  SOURCE
+    
+    Run this above code on your laptop or Colab. 
+    Take an image of yourself, holding another object which is there in COCO data set (search for COCO classes to learn). 
+    Run this image through the code above. 
+    Upload the link to GitHub implementation of this
+    Upload the annotated image by YOLO. 
+    Training Custom Dataset on Colab for YoloV3
+    Refer to this Colab File:  LINK
+    Refer to this GitHub  Repo
+    Download this datasetLinks to an external site.. This was annotated by EVA5 Students. Collect and add 25 images for the following 4 classes into the dataset     shared:
+    class names are in custom.names file. 
+    you must follow exact rules to make sure that you can train the model. Steps are explained in the README.md file on github repo link above.
+    Once you add your additional 100 images, train the model
 
-## Prerequisites
-- Python 3.6+
-- PyTorch 1.0+
+    Once done:
 
-## Training
-```
-# Start training with: 
-python main.py
+    Download a very small (~10-30sec) video from youtube which shows your classes. 
+    Use ffmpeg to extract frames from the video. 
 
-# You can manually resume the training with: 
-python main.py --resume --lr=0.01
-```
+    Upload on your drive (alternatively you could be doing all of this on your drive to save upload time)
+    Infer on these images using detect.py file. **Modify** detect.py file if your file names do not match the ones mentioned on GitHub. 
+    python detect.py --conf-three 0.3 --output output_folder_name
+    Use  ffmpeg  to convert the files in your output folder to video
+    Upload the video to YouTube. 
+    Also run the model on 16 images that you have collected (4 for each class)
+    Share the link to your GitHub project with the steps mentioned above - 1000 pts (only if all the steps were done, and it resulted in a trained model that you could run on video/images)
 
-## Accuracy
-| Model             | Acc.        |
-| ----------------- | ----------- |
-| [VGG16](https://arxiv.org/abs/1409.1556)              | 92.64%      |
-| [ResNet18](https://arxiv.org/abs/1512.03385)          | 93.02%      |
-| [ResNet50](https://arxiv.org/abs/1512.03385)          | 93.62%      |
-| [ResNet101](https://arxiv.org/abs/1512.03385)         | 93.75%      |
-| [RegNetX_200MF](https://arxiv.org/abs/2003.13678)     | 94.24%      |
-| [RegNetY_400MF](https://arxiv.org/abs/2003.13678)     | 94.29%      |
-| [MobileNetV2](https://arxiv.org/abs/1801.04381)       | 94.43%      |
-| [ResNeXt29(32x4d)](https://arxiv.org/abs/1611.05431)  | 94.73%      |
-| [ResNeXt29(2x64d)](https://arxiv.org/abs/1611.05431)  | 94.82%      |
-| [SimpleDLA](https://arxiv.org/abs/1707.064)           | 94.89%      |
-| [DenseNet121](https://arxiv.org/abs/1608.06993)       | 95.04%      |
-| [PreActResNet18](https://arxiv.org/abs/1603.05027)    | 95.11%      |
-| [DPN92](https://arxiv.org/abs/1707.01629)             | 95.16%      |
-| [DLA](https://arxiv.org/pdf/1707.06484.pdf)           | 95.47%      |
+    Share the link to your YouTube video - 500 pts
 
+    Share the link of your YouTube video shared on LinkedIn, Instagram, medium, etc! You have no idea how much you'd love people complimenting you! [TOTALLY OPTIONAL] - bonus points
+
+    Share the link to the readme file where we can find the result of your model on YOUR 16 images. - 500 pts
